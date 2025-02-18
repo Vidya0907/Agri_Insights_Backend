@@ -15,15 +15,15 @@ dotenv.config();
 const app = express();
 
 // Allow CORS from both the frontend deployed URL and localhost
-const allowedOrigins = [
-  process.env.CLIENT_URL,  // Deployed frontend
-  // "http://localhost:5173", // Local development
-];
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+  ? ['https://cosmoblog-frontend1.onrender.com'] // production URL
+  : ['http://localhost:5173']; // development URL (or any other local setup)
+
 app.use(cors({
   origin: allowedOrigins,
-  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-
 // Clerk authentication middleware
 app.use(clerkMiddleware());
 
