@@ -79,18 +79,16 @@ export const getPosts = async (req, res) => {
 };
 
 export const getPost = async (req, res) => {
+  console.log(`Fetching post with slug: ${req.params.slug}`); // Add log here
   try {
-    const post = await Post.findOne({ slug: req.params.slug }).populate(
-      "user",
-      "username img"
-    );
+    const post = await Post.findOne({ slug: req.params.slug });
     if (!post) {
-      return res.status(404).json("Post not found!");
+      return res.status(404).json({ message: "Post not found" });
     }
     res.status(200).json(post);
   } catch (error) {
-    console.error(error);
-    res.status(500).json("Server error while fetching the post");
+    console.log(error);
+    res.status(500).json({ message: error.message });
   }
 };
 
