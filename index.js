@@ -1,31 +1,35 @@
+// index.js
 import express from "express";
-import connectDB from "./lib/connectDB.js";  // This should match the correct path to connectDB.js
+import connectDB from "./lib/connectDB.js";
 import userRouter from "./routes/user.route.js";
 import postRouter from "./routes/post.route.js";
 import commentRouter from "./routes/comment.route.js";
 import webhookRouter from "./routes/webhook.route.js";
 import { clerkMiddleware, requireAuth } from "@clerk/express";
 import cors from "cors";
-import dotenv from "dotenv";  // Import dotenv at the top
+import dotenv from "dotenv";
 
 // Load environment variables from the .env file
-dotenv.config();  // Load the .env file
+dotenv.config();
 
 const app = express();
 
-// Enable CORS with the correct CLIENT_URL from the .env file
-const allowedOrigins = process.env.CLIENT_URL || "*"; // You can use '*' for open CORS (not recommended in production)
-app.use(cors({ 
-  origin: allowedOrigins, 
-  credentials: true 
+// Allow CORS from both the frontend deployed URL and localhost
+const allowedOrigins = [
+  process.env.CLIENT_URL,  // Deployed frontend
+  "http://localhost:5173", // Local development
+];
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
 }));
 
 // Clerk authentication middleware
 app.use(clerkMiddleware());
 
 // Middleware for JSON, except for webhooks
-app.use("/webhooks", express.raw({ type: "application/json" })); // Webhooks require raw body
-app.use(express.json()); // Other routes use normal JSON parsing
+app.use("/webhooks", express.raw({ type: "application/json" }));
+app.use(express.json());
 
 // API Routes
 app.use("/webhooks", webhookRouter);
@@ -44,8 +48,6 @@ app.use((error, req, res, next) => {
 
 // Start Server
 const port = process.env.PORT || 3000;
-
-// Connect to MongoDB before starting the server
 connectDB(); // Ensure DB is connected before server starts
 
 app.listen(port, () => {
