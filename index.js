@@ -13,9 +13,12 @@ dotenv.config();  // Load the .env file
 
 const app = express();
 
-// Enable CORS with the correct CLIENT_URL
+// Enable CORS with the correct CLIENT_URL from the .env file
 const allowedOrigins = process.env.CLIENT_URL || "*"; // You can use '*' for open CORS (not recommended in production)
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(cors({ 
+  origin: allowedOrigins, 
+  credentials: true 
+}));
 
 // Clerk authentication middleware
 app.use(clerkMiddleware());
