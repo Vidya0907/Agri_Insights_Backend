@@ -79,17 +79,11 @@ export const getPosts = async (req, res) => {
 };
 
 export const getPost = async (req, res) => {
-  console.log(`Fetching post with slug: ${req.params.slug}`); // Add log here
-  try {
-    const post = await Post.findOne({ slug: req.params.slug });
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-    res.status(200).json(post);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
-  }
+  const post = await Post.findOne({ slug: req.params.slug }).populate(
+    "user",
+    "username img"
+  );
+  res.status(200).json(post);
 };
 
 export const createPost = async (req, res) => {
