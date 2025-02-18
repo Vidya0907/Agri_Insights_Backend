@@ -6,6 +6,10 @@ import commentRouter from "./routes/comment.route.js";
 import webhookRouter from "./routes/webhook.route.js";
 import { clerkMiddleware, requireAuth } from "@clerk/express";
 import cors from "cors";
+import dotenv from "dotenv";  // <-- Import dotenv at the top
+
+// Load environment variables from the .env file
+dotenv.config();  // <-- Add this line to load the .env file
 
 const app = express();
 
@@ -18,16 +22,6 @@ app.use(clerkMiddleware());
 // Middleware for JSON, except for webhooks
 app.use("/webhooks", express.raw({ type: "application/json" })); // Webhooks require raw body
 app.use(express.json()); // Other routes use normal JSON parsing
-
-// CORS headers
-// app.use((req, res, next) => {
-//   res.header("Access-Control-Allow-Origin", "*");
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept"
-//   );
-//   next();
-// });
 
 // API Routes
 app.use("/webhooks", webhookRouter);
@@ -45,11 +39,6 @@ app.use((error, req, res, next) => {
 });
 
 // Start Server
-// app.listen(3000, () => {
-//   connectDB();
-//   console.log("✅ Server is running on port 3000!");
-// });
-
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

@@ -1,6 +1,10 @@
 import ImageKit from "imagekit";
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
+import dotenv from "dotenv";  // <-- Import dotenv
+
+// Load environment variables
+dotenv.config();  // <-- Load the environment variables
 
 export const getPosts = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -176,6 +180,7 @@ export const featurePost = async (req, res) => {
   res.status(200).json(updatedPost);
 };
 
+// Initialize ImageKit with environment variables
 const imagekit = new ImageKit({
   urlEndpoint: process.env.IK_URL_ENDPOINT,
   publicKey: process.env.IK_PUBLIC_KEY,
