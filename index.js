@@ -17,7 +17,7 @@ const app = express();
 // Allow CORS from both the frontend deployed URL and localhost
 const allowedOrigins = [
   process.env.CLIENT_URL,  // Deployed frontend
-  "http://localhost:5173", // Local development
+  // "http://localhost:5173", // Local development
 ];
 app.use(cors({
   origin: allowedOrigins,
