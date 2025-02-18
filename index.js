@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path"; // Ensure you import path
 import connectDB from "./lib/connectDB.js";
 import userRouter from "./routes/user.route.js";
 import postRouter from "./routes/post.route.js";
@@ -7,12 +8,14 @@ import webhookRouter from "./routes/webhook.route.js";
 import { clerkMiddleware, requireAuth } from "@clerk/express";
 import cors from "cors";
 import dotenv from "dotenv";
-import path from "path";
 
 // Load environment variables from the .env file
 dotenv.config();
 
 const app = express();
+
+// Use import.meta.url to get the current directory
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 // Allow CORS from both the frontend deployed URL and localhost
 const allowedOrigins = process.env.NODE_ENV === 'production' 
@@ -38,13 +41,13 @@ app.use("/users", userRouter);
 app.use("/posts", postRouter);
 app.use("/comments", commentRouter);
 
-// Serve React App for any route not handled by the API (frontend routes like /posts/:slug)
-app.use(express.static(path.join(__dirname, 'client/build')));
-
-// Catch-all handler for frontend routes (React Router)
-app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, 'client/build', 'index.html'));
-});
+// Serve the React frontend in production
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "client/build")));
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
+  });
+}
 
 // Global Error Handler
 app.use((error, req, res, next) => {
