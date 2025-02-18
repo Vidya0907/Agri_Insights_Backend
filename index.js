@@ -1,4 +1,3 @@
-// index.js
 import express from "express";
 import connectDB from "./lib/connectDB.js";
 import userRouter from "./routes/user.route.js";
@@ -8,6 +7,7 @@ import webhookRouter from "./routes/webhook.route.js";
 import { clerkMiddleware, requireAuth } from "@clerk/express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 
 // Load environment variables from the .env file
 dotenv.config();
@@ -24,6 +24,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
 // Clerk authentication middleware
 app.use(clerkMiddleware());
 
@@ -36,6 +37,14 @@ app.use("/webhooks", webhookRouter);
 app.use("/users", userRouter);
 app.use("/posts", postRouter);
 app.use("/comments", commentRouter);
+
+// Serve React App for any route not handled by the API (frontend routes like /posts/:slug)
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+// Catch-all handler for frontend routes (React Router)
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, 'client/build', 'index.html'));
+});
 
 // Global Error Handler
 app.use((error, req, res, next) => {
