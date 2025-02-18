@@ -148,37 +148,43 @@ export const deletePost = async (req, res) => {
 };
 
 export const featurePost = async (req, res) => {
-  const clerkUserId = req.auth.userId;
-  const postId = req.body.postId;
+  try {
+    const clerkUserId = req.auth.userId;
+    const postId = req.body.postId;  // The specific post to feature
 
-  if (!clerkUserId) {
-    return res.status(401).json("Not authenticated!");
+    if (!clerkUserId) {
+      return res.status(401).json("Not authenticated!");
+    }
+
+    const role = req.auth.sessionClaims?.metadata?.role || "user";
+
+    if (role !== "admin") {
+      return res.status(403).json("You are not authorized to feature posts!");
+    }
+
+    // Find the post by its ID
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json("Post not found!");
+    }
+
+    // Toggle the isFeatured status
+    const isFeatured = post.isFeatured;
+
+    const updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      { isFeatured: !isFeatured },  // Toggle the isFeatured flag
+      { new: true }  // Return the updated post
+    );
+
+    res.status(200).json(updatedPost);  // Send back the updated post
+  } catch (error) {
+    console.error(error);
+    res.status(500).json("Server error while toggling the feature status of the post");
   }
-
-  const role = req.auth.sessionClaims?.metadata?.role || "user";
-
-  if (role !== "admin") {
-    return res.status(403).json("You cannot feature posts!");
-  }
-
-  const post = await Post.findById(postId);
-
-  if (!post) {
-    return res.status(404).json("Post not found!");
-  }
-
-  const isFeatured = post.isFeatured;
-
-  const updatedPost = await Post.findByIdAndUpdate(
-    postId,
-    {
-      isFeatured: !isFeatured,
-    },
-    { new: true }
-  );
-
-  res.status(200).json(updatedPost);
 };
+
 
 // Initialize ImageKit with environment variables
 const imagekit = new ImageKit({
