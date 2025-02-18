@@ -44,6 +44,8 @@ app.use("/comments", commentRouter);
 // Serve the React frontend in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "client/build")));
+
+  // Handle all non-API requests by serving the index.html
   app.get("*", (req, res) => {
     res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
   });
