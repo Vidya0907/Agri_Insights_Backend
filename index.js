@@ -1,5 +1,7 @@
 import express from "express";
 import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 import connectDB from "./lib/connectDB.js";
 import userRouter from "./routes/user.route.js";
 import postRouter from "./routes/post.route.js";
@@ -14,26 +16,36 @@ dotenv.config();
 
 const app = express();
 
-// Use import.meta.url to get __dirname
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+// Fix __dirname for compatibility across different OS
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Allow CORS for your frontend
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
-  ? process.env.ALLOWED_ORIGINS.split(',') 
-  : ['http://localhost:5173']; // Default to local dev if no env var is provided
+// Allow CORS for frontend
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : ["http://localhost:5173"]; // Default for local dev
 
-app.use(cors({
-  origin: allowedOrigins,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-// Clerk authentication middleware
-app.use(clerkMiddleware());
-
-// Middleware for JSON, except for webhooks
+// Middleware for JSON parsing, except for webhooks
 app.use("/webhooks", express.raw({ type: "application/json" }));
 app.use(express.json());
+
+// Clerk authentication middleware (moved after webhooks)
+app.use(clerkMiddleware());
 
 // API Routes
 app.use("/webhooks", webhookRouter);
@@ -45,25 +57,33 @@ app.use("/comments", commentRouter);
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "client/build")));
 
-  // Serve the index.html file for all non-API routes
   app.get("*", (req, res) => {
     res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
   });
 }
 
-// Global Error Handler
+// Global Error Handler (hide stack in production)
 app.use((error, req, res, next) => {
   res.status(error.status || 500).json({
     message: error.message || "Something went wrong!",
     status: error.status,
-    stack: error.stack,
+    ...(process.env.NODE_ENV === "development" ? { stack: error.stack } : {}), // Hide stack in production
   });
 });
 
-// Start Server
+// Start Server After DB Connection
 const port = process.env.PORT || 3000;
-connectDB(); // Ensure DB is connected before server starts
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(port, () => {
+      console.log(`🚀 Server is running on port ${port}`);
+    });
+  } catch (error) {
+    console.error("❌ Failed to connect to DB:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
